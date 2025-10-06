@@ -1,0 +1,8 @@
+{
+  "name": "schedule-app",
+  "version": "1.0.0",
+  "main": "api/schedule.js",
+  "scripts": {
+    "start": "node api/schedule.js"
+  }
+}
