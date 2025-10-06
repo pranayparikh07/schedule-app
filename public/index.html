@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Schedule Generator</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+input, select { margin: 5px; padding: 5px; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
+th { background: #f0f0f0; }
+</style>
+</head>
+<body>
+
+<h2>Weekly Schedule Generator</h2>
+
+<label>Tuition Start (HH:MM):</label>
+<input type="time" id="tuitionStart" value="16:00">
+<label>Tuition End (HH:MM):</label>
+<input type="time" id="tuitionEnd" value="18:00">
+<label>Month:</label>
+<select id="month">
+  <option>October</option>
+  <option>November</option>
+  <option>December</option>
+  <option>January</option>
+  <option>February</option>
+  <option>March</option>
+  <option>April</option>
+</select>
+<button onclick="generateSchedule()">Generate Schedule</button>
+
+<div id="scheduleContainer"></div>
+
+<script>
+async function generateSchedule() {
+  const tuition_start = document.getElementById('tuitionStart').value;
+  const tuition_end = document.getElementById('tuitionEnd').value;
+  const month = document.getElementById('month').value;
+
+  const res = await fetch('/api/schedule', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ tuition_start, tuition_end, month })
+  });
+
+  const data = await res.json();
+  const container = document.getElementById('scheduleContainer');
+  container.innerHTML = '';
+
+  for(const [day, tasks] of Object.entries(data.weeklySchedule)) {
+    container.innerHTML += `<h3>${day}</h3>`;
+    let table = `<table><tr><th>Task</th><th>Start</th><th>End</th><th>Subject</th></tr>`;
+    tasks.forEach(t => {
+      table += `<tr><td>${t.task}</td><td>${t.start}</td><td>${t.end}</td><td>${t.subject||''}</td></tr>`;
+    });
+    table += '</table>';
+    container.innerHTML += table;
+  }
+}
+</script>
+
+</body>
+</html>
