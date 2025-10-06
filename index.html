@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Schedule Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Schedule Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
   <div class="max-w-7xl mx-auto p-4">
@@ -37,18 +37,29 @@
           </select>
         </div>
         <div>
-          <label class="block font-semibold mb-1">College?</label>
-          <select id="college" class="w-full border rounded px-2 py-1">
+          <label class="block font-semibold mb-1">Attend College?</label>
+          <select id="college" class="w-full border rounded px-2 py-1" onchange="toggleCollegeTime()">
             <option value="true">Yes</option>
             <option value="false">No</option>
           </select>
         </div>
-        <div>
-          <label class="block font-semibold mb-1">Tuition Start</label>
-          <input type="time" id="tuitionStart" class="w-full border rounded px-2 py-1" value="16:00">
+        <div id="collegeTimeDiv">
+          <label class="block font-semibold mb-1">College Start</label>
+          <input type="time" id="collegeStart" class="w-full border rounded px-2 py-1" value="07:00">
+          <label class="block font-semibold mb-1 mt-2">College End</label>
+          <input type="time" id="collegeEnd" class="w-full border rounded px-2 py-1" value="13:15">
         </div>
         <div>
-          <label class="block font-semibold mb-1">Tuition End</label>
+          <label class="block font-semibold mb-1">Tuition?</label>
+          <select id="tuitionToggle" class="w-full border rounded px-2 py-1" onchange="toggleTuitionTime()">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div id="tuitionTimeDiv">
+          <label class="block font-semibold mb-1">Tuition Start</label>
+          <input type="time" id="tuitionStart" class="w-full border rounded px-2 py-1" value="16:00">
+          <label class="block font-semibold mb-1 mt-2">Tuition End</label>
           <input type="time" id="tuitionEnd" class="w-full border rounded px-2 py-1" value="18:00">
         </div>
       </div>
@@ -58,51 +69,68 @@
     <div id="scheduleContainer"></div>
   </div>
 
-  <script>
-    async function generateSchedule() {
-      const day = document.getElementById('day').value;
-      const month = document.getElementById('month').value;
-      const college = document.getElementById('college').value === 'true';
-      const tuition_start = document.getElementById('tuitionStart').value;
-      const tuition_end = document.getElementById('tuitionEnd').value;
+<script>
+function toggleCollegeTime() {
+  const college = document.getElementById('college').value === 'true';
+  document.getElementById('collegeTimeDiv').style.display = college ? 'block' : 'none';
+}
 
-      const res = await fetch('/api/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ day, month, college, tuition_start, tuition_end })
-      });
+function toggleTuitionTime() {
+  const tuition = document.getElementById('tuitionToggle').value === 'true';
+  document.getElementById('tuitionTimeDiv').style.display = tuition ? 'block' : 'none';
+}
 
-      const data = await res.json();
-      const container = document.getElementById('scheduleContainer');
-      container.innerHTML = '';
+async function generateSchedule() {
+  const day = document.getElementById('day').value;
+  const month = document.getElementById('month').value;
+  const college = document.getElementById('college').value === 'true';
+  const collegeStart = college ? document.getElementById('collegeStart').value : null;
+  const collegeEnd = college ? document.getElementById('collegeEnd').value : null;
+  const tuitionToggle = document.getElementById('tuitionToggle').value === 'true';
+  const tuition_start = tuitionToggle ? document.getElementById('tuitionStart').value : null;
+  const tuition_end = tuitionToggle ? document.getElementById('tuitionEnd').value : null;
 
-      container.innerHTML += `<h2 class="text-xl md:text-2xl font-bold mb-2 text-center">${data.day} Schedule</h2>`;
+  const res = await fetch('/api/schedule', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ day, month, college, collegeStart, collegeEnd, tuition_start, tuition_end })
+  });
 
-      let table = `<div class="overflow-x-auto"><table class="min-w-full border border-gray-300 rounded-lg overflow-hidden text-sm md:text-base">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="px-2 md:px-4 py-2 border-b">Task</th>
-            <th class="px-2 md:px-4 py-2 border-b">Start</th>
-            <th class="px-2 md:px-4 py-2 border-b">End</th>
-            <th class="px-2 md:px-4 py-2 border-b">Subject</th>
-            <th class="px-2 md:px-4 py-2 border-b">Note</th>
-          </tr>
-        </thead>
-        <tbody>`;
+  const data = await res.json();
+  const container = document.getElementById('scheduleContainer');
+  container.innerHTML = '';
 
-      data.schedule.forEach(task => {
-        table += `<tr class="even:bg-gray-50">
-          <td class="px-2 md:px-4 py-1 border-b">${task.task}</td>
-          <td class="px-2 md:px-4 py-1 border-b">${task.start}</td>
-          <td class="px-2 md:px-4 py-1 border-b">${task.end}</td>
-          <td class="px-2 md:px-4 py-1 border-b">${task.subject || ''}</td>
-          <td class="px-2 md:px-4 py-1 border-b">${task.note || ''}</td>
-        </tr>`;
-      });
+  container.innerHTML += `<h2 class="text-xl md:text-2xl font-bold mb-2 text-center">${data.day} Schedule</h2>`;
 
-      table += '</tbody></table></div>';
-      container.innerHTML += table;
-    }
-  </script>
+  let table = `<div class="overflow-x-auto"><table class="min-w-full border border-gray-300 rounded-lg overflow-hidden text-sm md:text-base">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="px-2 md:px-4 py-2 border-b">Task</th>
+        <th class="px-2 md:px-4 py-2 border-b">Start</th>
+        <th class="px-2 md:px-4 py-2 border-b">End</th>
+        <th class="px-2 md:px-4 py-2 border-b">Subject</th>
+        <th class="px-2 md:px-4 py-2 border-b">Note</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  data.schedule.forEach(task => {
+    table += `<tr class="even:bg-gray-50">
+      <td class="px-2 md:px-4 py-1 border-b">${task.task}</td>
+      <td class="px-2 md:px-4 py-1 border-b">${task.start}</td>
+      <td class="px-2 md:px-4 py-1 border-b">${task.end}</td>
+      <td class="px-2 md:px-4 py-1 border-b">${task.subject || ''}</td>
+      <td class="px-2 md:px-4 py-1 border-b">${task.note || ''}</td>
+    </tr>`;
+  });
+
+  table += '</tbody></table></div>';
+  container.innerHTML += table;
+}
+
+// Initialize visibility
+toggleCollegeTime();
+toggleTuitionTime();
+</script>
 </body>
 </html>
